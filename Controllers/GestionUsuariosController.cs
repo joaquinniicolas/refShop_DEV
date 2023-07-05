@@ -10,6 +10,9 @@ using refShop_DEV.Models.Login;
 using refShop_DEV.Models.MyDbContext;
 using refShop_DEV.Models.Permission;
 using refShop_DEV.Models.Restaurant;
+using refShop_DEV.Services;
+using refShop_DEV.Services.Interfaces;
+using System.Data;
 using System.Security.Claims;
 
 namespace refShop_DEV.Controllers
@@ -17,23 +20,25 @@ namespace refShop_DEV.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Gerente")]
 
     public class GestionUsuariosController : ControllerBase
     {
 
         private readonly MyDbContext _context;
         private readonly IMapper _mapper;
-        private readonly UserDto _authenticatedUser;
         private readonly RolePermissionsDTO _rolePermission;
         private readonly PermissionDTO _permissionDTO;
-        public GestionUsuariosController(MyDbContext context, IMapper mapper, UserDto authenticatedUser, RolePermissionsDTO rolePermission, PermissionDTO permission)
+        private readonly ITokenService _tokenService;
+
+
+        public GestionUsuariosController(MyDbContext context, IMapper mapper, RolePermissionsDTO rolePermission, PermissionDTO permission, ITokenService tokenService)
         {
             _context = context;
             _mapper = mapper;
-            _authenticatedUser = authenticatedUser;
             _rolePermission = rolePermission;
             _permissionDTO = permission;
+            _tokenService = tokenService;
             
         }
 
@@ -49,6 +54,33 @@ namespace refShop_DEV.Controllers
             var rolesDto = _mapper.Map<List<UserRoleDto>>(roles);
 
             return Ok(rolesDto);
+        }
+
+        [HttpGet("getRolePermissions")]
+        public ActionResult<IEnumerable<UserRoleDto>> GetRolePermissions()
+        {
+            var roles = _context.RolePermissions.ToList();
+            if(roles.Count == 0)
+            {
+                return NotFound();
+            }
+            var rolesP = _mapper.Map<List<RolePermissionsDTO>>(roles);
+            return Ok(rolesP);
+        }
+
+
+        [HttpGet("getPermissions")]
+        public ActionResult<IEnumerable<PermissionDTO>> GetPermissions()
+        {
+            var permissions = _context.Permissions.ToList();
+            if(permissions.Count == 0)
+            {
+                return NotFound();
+            }
+
+            var permissionsDto = _mapper.Map<List<PermissionDTO>>(permissions);
+
+            return Ok(permissionsDto);
         }
 
 
@@ -74,7 +106,7 @@ namespace refShop_DEV.Controllers
 
 
         [HttpPost("register")]
-
+        [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { new string[] { "AgregarUsuario" } })]
         public async Task<IActionResult> Register([FromBody]RegisterDto registerDto, string photoUrl)
         {
 
@@ -206,6 +238,12 @@ namespace refShop_DEV.Controllers
             return Ok(userDto);
         }
 
+        [HttpPost("renew")]
+        public IActionResult RestartToken()
+        {
+            string renewedToken = _tokenService.RenewToken();
+            return Ok(renewedToken);
+        }
 
         [HttpGet("getUser")]
         public async Task<ActionResult<UserDto>> GetUser()
@@ -316,7 +354,74 @@ namespace refShop_DEV.Controllers
 
         }
 
-        
+        [HttpGet("getAllShifts")]
+        public async Task<ActionResult<IEnumerable<TurnoDTO>>> GetShifts() 
+        {
+            var turnos  =  _context.Turnos.ToListAsync();
+
+            if (turnos.Result.Count == 0)
+            {
+                return NotFound();
+            }
+            var turnoDTO = _mapper.Map<List<TurnoDTO>>(turnos);
+
+            return Ok(turnoDTO);
+       
+        }
+
+        [HttpGet("getShift/{id}")]
+        public async Task<ActionResult<IEnumerable<TurnoDTO>>> GetTurno(int id)
+        {
+            var usuario = await _context.Users.FindAsync(id);
+
+            if (usuario == null)
+            {
+                return NotFound();
+            }
+
+            var turnos = await _context.Turnos.Where(t => t.IDEmpleado == id).ToListAsync();
+            var turnosDTO = _mapper.Map<List<TurnoDTO>>(turnos);
+            return Ok(turnosDTO);
+        }
+
+        [HttpPost("createShift")]
+        public async Task<ActionResult<TurnoDTO>> CrearTurno(int id, TurnoDTO turnoDTO)
+        {
+            var usuario = await _context.Users.FindAsync(id);
+
+            if (usuario == null)
+            {
+                return NotFound();
+            }
+
+            var turno = _mapper.Map<Turno>(turnoDTO);
+            var newValue = JsonConvert.SerializeObject(turno);
+
+            var log = new Log
+            {
+                TableName = "Turnos",
+                Operation = "UPDATE",
+                UserId = GetUserId(),
+                ColumnName = "Todas las columnas",
+                OldValue = "-",
+                NewValue = newValue,
+                Description = "Se ha creado un nuevo turno",
+                Timestamp = DateTime.UtcNow
+            };
+
+            _context.Turnos.Add(turno);
+            await _context.SaveChangesAsync();
+
+            var turnoCreadoDTO = _mapper.Map<TurnoDTO>(turno);
+            return CreatedAtAction(nameof(GetTurno), new { id = turnoCreadoDTO.IDTurno }, turnoCreadoDTO);
+        }
+
+
+
+
+
+
+
 
 
     }

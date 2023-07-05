@@ -31,21 +31,16 @@ namespace refShop_DEV.Controllers
             _authService = authService;
         }
 
-
-
-
-
         [HttpPost("login")]
         public async Task<IActionResult> Login(AuthenticationRequest form)
         {
             var existingUser = await _context.Users
-            .Include(u => u.UserRole)
-            .ThenInclude(u => u.RolePermissions)
+             .Include(u => u.UserRole)
+                 .ThenInclude(ur => ur.RolePermissions)
+                     .ThenInclude(rp => rp.Permission)
              .FirstOrDefaultAsync(u => u.Username == form.Username);
 
-
-
-
+            //var existingUser = await _context.Users.FirstOrDefaultAsync();
 
             if (existingUser == null)
             {
@@ -70,23 +65,19 @@ namespace refShop_DEV.Controllers
                 Timestamp = DateTime.UtcNow
             };
 
-            var token = _authService.GenerateToken(existingUser);
-            existingUser.CreatedAt = existingUser.CreatedAt;
-            existingUser.UpdatedAt = existingUser.UpdatedAt;
-            var responseDto = _mapper.Map<UserDto>(existingUser);
-
             // Mapeo de RolePermissions a RolePermissionsDTO
             var rolePermissionsDto = _mapper.Map<List<RolePermissionsDTO>>(existingUser.UserRole.RolePermissions);
 
             // Mapeo de ActivityPermission a PermissionDTO
             var permissionDto = _mapper.Map<List<PermissionDTO>>(existingUser.UserRole.RolePermissions.Select(rp => rp.Permission));
 
-            //PERMISSIONS
-
-
+            var token = _authService.GenerateToken(existingUser,permissionDto);
+            existingUser.CreatedAt = existingUser.CreatedAt;
+            existingUser.UpdatedAt = existingUser.UpdatedAt;
+            var responseDto = _mapper.Map<UserDto>(existingUser);
             _context.Logs.Add(log);
             await _context.SaveChangesAsync();
-            return Ok(new { token, user = responseDto, rolePermissions = rolePermissionsDto, permissions = permissionDto });
+            return Ok(new { token, user = responseDto/*, rolePermissions = rolePermissionsDto, permissions = permissionDto */});
         }
 
 
@@ -99,9 +90,6 @@ namespace refShop_DEV.Controllers
         }
 
     }
-
-
-
 
 
 }

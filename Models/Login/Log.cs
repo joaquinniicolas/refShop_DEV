@@ -34,6 +34,8 @@ namespace refShop_DEV.Models.Login
         public DateTime Timestamp { get; set; }
 
         public virtual User User { get; set; }
+
+
     }
 
 

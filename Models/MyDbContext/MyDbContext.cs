@@ -26,7 +26,9 @@ namespace refShop_DEV.Models.MyDbContext
         public DbSet<Mesa> Mesa { get; set; }
         public DbSet<Pedido> Pedidos { get; set; }
         public DbSet<RolePermissions> RolePermissions { get; set; }
-        public DbSet<ActivityPermission> Permissions { get; set; }
+        public DbSet<Permissions> Permissions { get; set; }
+
+        public DbSet<Turno> Turnos { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -61,18 +63,23 @@ namespace refShop_DEV.Models.MyDbContext
                 .HasForeignKey(m => m.IdMozo)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<RolePermissions>()
-        .HasKey(rp => new { rp.RoleId, rp.PermissionId });
+
 
             modelBuilder.Entity<RolePermissions>()
-                .HasOne(rp => rp.Role)
-                .WithMany()
+      .HasKey(rp => new { rp.RoleId, rp.PermissionId });
+
+            modelBuilder.Entity<RolePermissions>()
+                .HasOne(rp => rp.UserRole)
+                .WithMany(ur => ur.RolePermissions)
                 .HasForeignKey(rp => rp.RoleId);
 
             modelBuilder.Entity<RolePermissions>()
                 .HasOne(rp => rp.Permission)
-                .WithMany()
+                .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId);
+
+            modelBuilder.Entity<Turno>()
+        .HasKey(t => t.IDTurno);
 
 
             //// Configuración explícita para la relación inversa de MesasAsociadas

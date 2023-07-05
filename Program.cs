@@ -13,12 +13,14 @@ using refShop_DEV.Services;
 using refShop_DEV.Models.Restaurant;
 using Microsoft.AspNetCore.Http.Features;
 using refShop_DEV.Models.Permission;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
 
 
 
@@ -35,11 +37,15 @@ MapperConfiguration config = new MapperConfiguration(cfg =>
     cfg.CreateMap<Mesa, MesaDTO>();
     cfg.CreateMap<UserRole, UserRoleDto>();
     cfg.CreateMap<RolePermissions, RolePermissionsDTO>();
-    cfg.CreateMap<ActivityPermission, PermissionDTO>();
+    cfg.CreateMap<Permissions, PermissionDTO>();
+    cfg.CreateMap<Turno, TurnoDTO>();
 });
 
 IMapper mapper = config.CreateMapper();
 builder.Services.AddSingleton(mapper);
+builder.Services.AddScoped<RolePermissionsDTO>();
+builder.Services.AddScoped<PermissionDTO>();
+builder.Services.AddScoped<ITokenService,AuthenticationServiceJWT>();
 
 //For Files
 builder.Services.Configure<IISServerOptions>(
@@ -56,10 +62,9 @@ builder.Services.Configure<FormOptions>(
 
 
 
-
+//Authentication basada en tokens
 builder.Services.AddScoped<AuthenticationServiceJWT>();
 
-//Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -75,9 +80,36 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 };
             });
 
+// ----------------------------------------
+
 //IUserService
 builder.Services.AddScoped<IUserService, UserService>();
+//--------------
 
+//Authorization basada en permisos
+
+
+
+
+
+
+// Obtiene los permisos requeridos desde los atributos de autorización en el contexto HTTP
+
+
+//builder.Services.AddScoped<PermissionAuthorizationFilter>(provider =>
+//{
+//    var permission = "AgregarUsuario"; // Reemplaza esto por el valor correcto
+//    var dbContext = provider.GetRequiredService<MyDbContext>();
+//    return new PermissionAuthorizationFilter(permission, dbContext);
+//});
+
+//builder.Services.AddControllers(options =>
+//{
+//    options.Filters.Add(new ServiceFilterAttribute(typeof(PermissionAuthorizationFilter)));
+//});
+
+//-------------------------------------
+builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>
 {
@@ -92,9 +124,23 @@ builder.Services.AddCors(options =>
     });
 });
 
+//builder.Services.AddLogging(logging =>
+//{
+//    logging.ClearProviders();
+//    logging.AddConsole();
+
+//});
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 
 
 var app = builder.Build();
+
+
+//MIDDLEWARE PARA RENOVAR TOKEN AUTOMATICAMENTE PERO SE IMPLEMENTO OTRA METODOLOGIA
+//app.UseMiddleware<TokenValidationMiddleware>();
 
 // Configure the HTTP request pipeline.
 
