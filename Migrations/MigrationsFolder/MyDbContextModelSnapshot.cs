@@ -3,7 +3,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using refShop_DEV.Models.MyDbContext;
 
@@ -12,10 +11,9 @@ using refShop_DEV.Models.MyDbContext;
 namespace refShop_DEV.Migrations.MigrationsFolder
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20230603005619_CrearTablasPermissionsYRolePermissions")]
-    partial class CrearTablasPermissionsYRolePermissions
+    partial class MyDbContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,20 +142,15 @@ namespace refShop_DEV.Migrations.MigrationsFolder
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("UserRoleId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserRoleId");
 
                     b.ToTable("Permissions");
                 });
@@ -170,19 +163,9 @@ namespace refShop_DEV.Migrations.MigrationsFolder
                     b.Property<int>("PermissionId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PermissionsId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserRoleId")
-                        .HasColumnType("int");
-
                     b.HasKey("RoleId", "PermissionId");
 
                     b.HasIndex("PermissionId");
-
-                    b.HasIndex("PermissionsId");
-
-                    b.HasIndex("UserRoleId");
 
                     b.ToTable("RolePermissions");
                 });
@@ -433,6 +416,94 @@ namespace refShop_DEV.Migrations.MigrationsFolder
                     b.ToTable("Promociones");
                 });
 
+            modelBuilder.Entity("refShop_DEV.Models.Restaurant.RegistroActividad", b =>
+                {
+                    b.Property<int>("ID_Registro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID_Registro"), 1L, 1);
+
+                    b.Property<string>("Comentario")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Conectado")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan?>("Demora_Inicio")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime?>("Fecha_HoraFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Fecha_HoraInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Horas_Extras")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("Horas_Faltantes")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("IDTurno")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ID_Empleado")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Justificado")
+                        .HasColumnType("bit");
+
+                    b.HasKey("ID_Registro");
+
+                    b.HasIndex("IDTurno");
+
+                    b.HasIndex("ID_Empleado");
+
+                    b.ToTable("RegistrosActividad");
+                });
+
+            modelBuilder.Entity("refShop_DEV.Models.Restaurant.Turno", b =>
+                {
+                    b.Property<int>("IDTurno")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IDTurno"), 1L, 1);
+
+                    b.Property<string>("CargaHoraria")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CreadoPor")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Dias_Laborales")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaDeCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan>("HoraFin")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan>("HoraInicio")
+                        .HasColumnType("time");
+
+                    b.Property<int?>("IDEmpleado")
+                        .HasColumnType("int");
+
+                    b.HasKey("IDTurno");
+
+                    b.HasIndex("CreadoPor")
+                        .IsUnique()
+                        .HasFilter("[CreadoPor] IS NOT NULL");
+
+                    b.ToTable("Turnos");
+                });
+
             modelBuilder.Entity("refShop_DEV.Models.Login.Log", b =>
                 {
                     b.HasOne("refShop_DEV.Models.Login.User", "User")
@@ -455,38 +526,23 @@ namespace refShop_DEV.Migrations.MigrationsFolder
                     b.Navigation("UserRole");
                 });
 
-            modelBuilder.Entity("refShop_DEV.Models.Permission.Permissions", b =>
-                {
-                    b.HasOne("refShop_DEV.Models.Permission.UserRole", null)
-                        .WithMany("ActivityPermissions")
-                        .HasForeignKey("UserRoleId");
-                });
-
             modelBuilder.Entity("refShop_DEV.Models.Permission.RolePermissions", b =>
                 {
                     b.HasOne("refShop_DEV.Models.Permission.Permissions", "Permission")
-                        .WithMany()
+                        .WithMany("RolePermissions")
                         .HasForeignKey("PermissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("refShop_DEV.Models.Permission.Permissions", null)
+                    b.HasOne("refShop_DEV.Models.Permission.UserRole", "UserRole")
                         .WithMany("RolePermissions")
-                        .HasForeignKey("PermissionsId");
-
-                    b.HasOne("refShop_DEV.Models.Permission.UserRole", "Role")
-                        .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("refShop_DEV.Models.Permission.UserRole", null)
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("UserRoleId");
-
                     b.Navigation("Permission");
 
-                    b.Navigation("Role");
+                    b.Navigation("UserRole");
                 });
 
             modelBuilder.Entity("refShop_DEV.Models.Restaurant.Categoria", b =>
@@ -590,6 +646,32 @@ namespace refShop_DEV.Migrations.MigrationsFolder
                     b.Navigation("AplicadoPorNavigation");
                 });
 
+            modelBuilder.Entity("refShop_DEV.Models.Restaurant.RegistroActividad", b =>
+                {
+                    b.HasOne("refShop_DEV.Models.Restaurant.Turno", "Turno")
+                        .WithMany()
+                        .HasForeignKey("IDTurno")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("refShop_DEV.Models.Login.User", "User")
+                        .WithMany()
+                        .HasForeignKey("ID_Empleado")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Turno");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("refShop_DEV.Models.Restaurant.Turno", b =>
+                {
+                    b.HasOne("refShop_DEV.Models.Login.User", null)
+                        .WithOne("Turno")
+                        .HasForeignKey("refShop_DEV.Models.Restaurant.Turno", "CreadoPor")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("refShop_DEV.Models.Login.User", b =>
                 {
                     b.Navigation("Categorias");
@@ -603,6 +685,8 @@ namespace refShop_DEV.Migrations.MigrationsFolder
                     b.Navigation("MesasModificadas");
 
                     b.Navigation("MesasMozo");
+
+                    b.Navigation("Turno");
                 });
 
             modelBuilder.Entity("refShop_DEV.Models.Permission.Permissions", b =>
@@ -612,8 +696,6 @@ namespace refShop_DEV.Migrations.MigrationsFolder
 
             modelBuilder.Entity("refShop_DEV.Models.Permission.UserRole", b =>
                 {
-                    b.Navigation("ActivityPermissions");
-
                     b.Navigation("RolePermissions");
 
                     b.Navigation("Users");

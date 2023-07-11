@@ -27,17 +27,15 @@ namespace refShop_DEV.Controllers
 
         private readonly MyDbContext _context;
         private readonly IMapper _mapper;
-        private readonly RolePermissionsDTO _rolePermission;
-        private readonly PermissionDTO _permissionDTO;
+        private readonly IDTOInterfaces _dTOInterfaces;
         private readonly ITokenService _tokenService;
 
 
-        public GestionUsuariosController(MyDbContext context, IMapper mapper, RolePermissionsDTO rolePermission, PermissionDTO permission, ITokenService tokenService)
+        public GestionUsuariosController(MyDbContext context,IDTOInterfaces dTOInterfaces, IMapper mapper, ITokenService tokenService)
         {
             _context = context;
             _mapper = mapper;
-            _rolePermission = rolePermission;
-            _permissionDTO = permission;
+            _dTOInterfaces = dTOInterfaces;
             _tokenService = tokenService;
             
         }
@@ -357,11 +355,13 @@ namespace refShop_DEV.Controllers
         [HttpGet("getAllShifts")]
         public async Task<ActionResult<IEnumerable<TurnoDTO>>> GetShifts() 
         {
-            var turnos  =  _context.Turnos.ToListAsync();
 
-            if (turnos.Result.Count == 0)
+
+            var turnos  = await _context.Turnos.ToListAsync();
+
+            if (turnos.Count == 0)
             {
-                return NotFound();
+                return NoContent();
             }
             var turnoDTO = _mapper.Map<List<TurnoDTO>>(turnos);
 
@@ -376,7 +376,7 @@ namespace refShop_DEV.Controllers
 
             if (usuario == null)
             {
-                return NotFound();
+                return NoContent();
             }
 
             var turnos = await _context.Turnos.Where(t => t.IDEmpleado == id).ToListAsync();
@@ -385,16 +385,30 @@ namespace refShop_DEV.Controllers
         }
 
         [HttpPost("createShift")]
-        public async Task<ActionResult<TurnoDTO>> CrearTurno(int id, TurnoDTO turnoDTO)
+        public async Task<ActionResult<TurnoDTO>> CrearTurno(TurnoDTO turnoDTO)
         {
-            var usuario = await _context.Users.FindAsync(id);
+            var usuario = await _context.Users.FindAsync(turnoDTO.IDEmpleado);
 
             if (usuario == null)
             {
                 return NotFound();
             }
 
-            var turno = _mapper.Map<Turno>(turnoDTO);
+            turnoDTO.CreadoPor = GetUserId();
+
+
+
+            var turno = new Turno()
+            {
+                IDEmpleado = turnoDTO.IDEmpleado,
+                HoraInicio = turnoDTO.HoraInicio,
+                HoraFin = turnoDTO.HoraFin,
+                FechaDeCreacion = DateTime.Now,
+                CreadoPor = GetUserId(),
+                Dias_Laborales = turnoDTO.Dias_Laborales,
+                CargaHoraria = turnoDTO.CargaHoraria
+
+            };
             var newValue = JsonConvert.SerializeObject(turno);
 
             var log = new Log

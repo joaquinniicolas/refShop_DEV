@@ -62,6 +62,9 @@ namespace refShop_DEV.Models.Login
         public ICollection<Mesa> MesasModificadas { get; set; }
         public ICollection<Mesa> MesasAsociadas { get; set; }
         public ICollection<Mesa> MesasMozo { get; set; }
+        public virtual Turno? Turno { get; set; }
+
+
 
     }
 

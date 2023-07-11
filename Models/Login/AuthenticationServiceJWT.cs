@@ -5,6 +5,8 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using refShop_DEV.Models.MyDbContext;
 
 namespace refShop_DEV.Models.Login
 {
@@ -16,9 +18,11 @@ namespace refShop_DEV.Models.Login
         private static User _user;
         private static List<PermissionDTO> _permissions;
         private DateTime tokenExpiration;
+        private readonly Models.MyDbContext.MyDbContext _dbContext;
 
-        public AuthenticationServiceJWT(IConfiguration configuration)
+        public AuthenticationServiceJWT(IConfiguration configuration, Models.MyDbContext.MyDbContext context)
         {
+            _dbContext = context;
             _configuration = configuration;
             var jwtKey = configuration.GetValue<string>("Jwt:Key");
             if (string.IsNullOrWhiteSpace(jwtKey))
@@ -28,6 +32,18 @@ namespace refShop_DEV.Models.Login
             
             _signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtKey));
         }
+
+        public Models.MyDbContext.MyDbContext GetDbContext()
+        {
+            return _dbContext;
+        }
+        public async Task SaveChangesAsync()
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+
+
+
 
         //PARA GENERAR EL TOKEN DE AUTHENTICACION
         public string GenerateToken(User user, List<PermissionDTO> permissions)

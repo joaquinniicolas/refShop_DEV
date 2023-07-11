@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Migrations\MigrationsFolder\" />
     <Folder Include="Profiles\UserPhotos\" />
   </ItemGroup>
 

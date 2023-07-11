@@ -1,6 +1,8 @@
-﻿namespace refShop_DEV.Models.Permission
+﻿using refShop_DEV.Services.Interfaces;
+
+namespace refShop_DEV.Models.Permission
 {
-    public class PermissionDTO
+    public class PermissionDTO : IPermissionsDTO
     {
         public int Id { get; set; }
 

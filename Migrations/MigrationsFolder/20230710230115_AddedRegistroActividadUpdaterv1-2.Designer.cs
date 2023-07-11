@@ -3,17 +3,19 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using refShop_DEV.Models.MyDbContext;
 
 #nullable disable
 
-namespace refShop_DEV.Migrations
+namespace refShop_DEV.Migrations.MigrationsFolder
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230710230115_AddedRegistroActividadUpdaterv1-2")]
+    partial class AddedRegistroActividadUpdaterv12
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -416,6 +418,54 @@ namespace refShop_DEV.Migrations
                     b.ToTable("Promociones");
                 });
 
+            modelBuilder.Entity("refShop_DEV.Models.Restaurant.RegistroActividad", b =>
+                {
+                    b.Property<int>("ID_Registro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID_Registro"), 1L, 1);
+
+                    b.Property<string>("Comentario")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Conectado")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan?>("Demora_Inicio")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime?>("Fecha_HoraFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Fecha_HoraInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Horas_Extras")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("Horas_Faltantes")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("IDTurno")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ID_Empleado")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Justificado")
+                        .HasColumnType("bit");
+
+                    b.HasKey("ID_Registro");
+
+                    b.HasIndex("IDTurno");
+
+                    b.HasIndex("ID_Empleado");
+
+                    b.ToTable("RegistrosActividad");
+                });
+
             modelBuilder.Entity("refShop_DEV.Models.Restaurant.Turno", b =>
                 {
                     b.Property<int>("IDTurno")
@@ -424,7 +474,11 @@ namespace refShop_DEV.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IDTurno"), 1L, 1);
 
-                    b.Property<int>("CreadoPor")
+                    b.Property<string>("CargaHoraria")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CreadoPor")
                         .HasColumnType("int");
 
                     b.Property<string>("Dias_Laborales")
@@ -434,16 +488,20 @@ namespace refShop_DEV.Migrations
                     b.Property<DateTime>("FechaDeCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaFin")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("HoraFin")
+                        .HasColumnType("time");
 
-                    b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("HoraInicio")
+                        .HasColumnType("time");
 
-                    b.Property<int>("IDEmpleado")
+                    b.Property<int?>("IDEmpleado")
                         .HasColumnType("int");
 
                     b.HasKey("IDTurno");
+
+                    b.HasIndex("CreadoPor")
+                        .IsUnique()
+                        .HasFilter("[CreadoPor] IS NOT NULL");
 
                     b.ToTable("Turnos");
                 });
@@ -590,6 +648,32 @@ namespace refShop_DEV.Migrations
                     b.Navigation("AplicadoPorNavigation");
                 });
 
+            modelBuilder.Entity("refShop_DEV.Models.Restaurant.RegistroActividad", b =>
+                {
+                    b.HasOne("refShop_DEV.Models.Restaurant.Turno", "Turno")
+                        .WithMany()
+                        .HasForeignKey("IDTurno")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("refShop_DEV.Models.Login.User", "User")
+                        .WithMany()
+                        .HasForeignKey("ID_Empleado")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Turno");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("refShop_DEV.Models.Restaurant.Turno", b =>
+                {
+                    b.HasOne("refShop_DEV.Models.Login.User", null)
+                        .WithOne("Turno")
+                        .HasForeignKey("refShop_DEV.Models.Restaurant.Turno", "CreadoPor")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("refShop_DEV.Models.Login.User", b =>
                 {
                     b.Navigation("Categorias");
@@ -603,6 +687,8 @@ namespace refShop_DEV.Migrations
                     b.Navigation("MesasModificadas");
 
                     b.Navigation("MesasMozo");
+
+                    b.Navigation("Turno");
                 });
 
             modelBuilder.Entity("refShop_DEV.Models.Permission.Permissions", b =>

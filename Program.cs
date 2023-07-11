@@ -16,6 +16,7 @@ using refShop_DEV.Models.Permission;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using refShop_DEV.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,9 +44,12 @@ MapperConfiguration config = new MapperConfiguration(cfg =>
 
 IMapper mapper = config.CreateMapper();
 builder.Services.AddSingleton(mapper);
-builder.Services.AddScoped<RolePermissionsDTO>();
-builder.Services.AddScoped<PermissionDTO>();
+//builder.Services.AddScoped<RolePermissionsDTO>();
+//builder.Services.AddScoped<PermissionDTO>();
+//builder.Services.AddScoped<TurnoDTO>();
 builder.Services.AddScoped<ITokenService,AuthenticationServiceJWT>();
+
+builder.Services.AddSingleton<IDTOInterfaces, DTOInterfaces>();
 
 //For Files
 builder.Services.Configure<IISServerOptions>(
@@ -78,6 +82,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     ValidAudience = builder.Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = async context =>
+                    {
+                        // Manejar el evento de autenticación fallida aquí
+                        var authService = context.HttpContext.RequestServices.GetService<AuthenticationServiceJWT>();
+                        var dbContext = authService.GetDbContext();
+
+                        // Verificar si el motivo de la falla es que el token ha expirado
+
+                        if (context.Exception is SecurityTokenExpiredException)
+                        {
+
+                            var currentUser = context.HttpContext.User;
+
+                            if (int.TryParse(currentUser.Claims.FirstOrDefault(c => c.Type == "NameIdentifier")?.Value, out int employeeId))
+                            {
+                                // Realizar la lógica para actualizar el registro de actividad correspondiente al usuario
+                                var registro = dbContext.RegistrosActividad.FirstOrDefault(r => r.ID_Empleado == employeeId && r.Fecha_HoraFin == null);
+
+                                if (registro != null)
+                                {
+                                    registro.Fecha_HoraFin = DateTime.Now;
+                                    await authService.SaveChangesAsync();
+                                }
+                            }
+
+
+                        }
+                    }
+                };
+
+
             });
 
 // ----------------------------------------

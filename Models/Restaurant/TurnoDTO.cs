@@ -2,17 +2,19 @@
 {
 
     public class TurnoDTO
-{
-    public int IDTurno { get; set; }
-    public int IDEmpleado { get; set; }
-    public DateTime FechaInicio { get; set; }
-    public DateTime FechaFin { get; set; }
-    public DateTime FechaDeCreacion { get; set; }
-    public int CreadoPor { get; set; }
-    public string Dias_Laborales { get; set; }
+    {
+        public int IDTurno { get; set; }
+        public int IDEmpleado { get; set; }
+        public TimeSpan HoraInicio { get; set; }
+        public TimeSpan HoraFin { get; set; }
+        public DateTime? FechaDeCreacion { get; set; }
+        public int CreadoPor { get; set; }
+        public string Dias_Laborales { get; set; }
 
-    // ... otras propiedades y relaciones ...
-}
+        public string CargaHoraria { get; set; }
+
+        // ... otras propiedades y relaciones ...
+    }
 
 
 
